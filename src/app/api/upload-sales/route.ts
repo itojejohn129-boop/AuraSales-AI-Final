@@ -343,8 +343,9 @@ function detectUploadFormat(file: File): UploadFormat {
 
 function isPayloadTooLargeError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
-  const message = String((error as any).message || "").toLowerCase();
-  const status = Number((error as any).status || (error as any).statusCode || 0);
+  const err = error as Record<string, unknown>;
+  const message = String(err.message || "").toLowerCase();
+  const status = Number(err.status || err.statusCode || 0);
   return (
     status === 413 ||
     message.includes("413") ||

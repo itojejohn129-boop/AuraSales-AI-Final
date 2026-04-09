@@ -4,13 +4,5 @@
       "path": "/api/cron/ingest-market-data",
       "schedule": "0 0 * * *"
     }
-  ],
-  "functions": {
-    "api/sales/upload": {
-      "maxDuration": 60
-    },
-    "api/upload-sales": {
-      "maxDuration": 60
-    }
-  }
+  ]
 }
