@@ -1,10 +1,10 @@
 import createAdminClient from "@/utils/supabase/admin";
+import { isAdminEmail } from "@/lib/accessControl";
 
 export const FREE_CREDIT_LIMIT = 1000;
 export const CREDIT_COST_PER_LOGIN = 50;
 export const CREDIT_COST_PER_AI_ACTION = 50;
 export const CREDIT_COST_PER_UPLOAD = 50;
-const ADMIN_OVERRIDE_EMAIL = "itojeogheneyunme@gmail.com";
 
 export type UserPlan = "free" | "pro" | "enterprise";
 
@@ -148,6 +148,12 @@ export async function consumeAiCredit(
   amount: number = CREDIT_COST_PER_AI_ACTION
 ): Promise<{ allowed: boolean; summary: CreditSummary }> {
   const record = await ensureUserCredits(userId, email);
+  if (isAdminEmail(email)) {
+    return {
+      allowed: true,
+      summary: toSummary(record),
+    };
+  }
   const safeAmount = Math.max(CREDIT_COST_PER_AI_ACTION, amount);
 
   if (record.plan !== "free" || record.credits_limit === null) {
@@ -192,6 +198,12 @@ export async function consumeUploadCredit(
   amount: number = CREDIT_COST_PER_UPLOAD
 ): Promise<{ allowed: boolean; summary: CreditSummary }> {
   const record = await ensureUserCredits(userId, email);
+  if (isAdminEmail(email)) {
+    return {
+      allowed: true,
+      summary: toSummary(record),
+    };
+  }
   const safeAmount = Math.max(CREDIT_COST_PER_UPLOAD, amount);
 
   if (record.plan !== "free" || record.credits_limit === null) {
@@ -235,33 +247,9 @@ export async function consumeLoginCreditIfNeeded(
   email?: string | null,
   lastSignInAt?: string | null
 ): Promise<{ allowed: boolean; summary: CreditSummary }> {
-  let record = await ensureUserCredits(userId, email);
-
-  // Admin should start each fresh login session in free mode (same as normal users)
-  // and only become Pro after explicit unlock verification.
-  if (
-    email &&
-    email.toLowerCase() === ADMIN_OVERRIDE_EMAIL &&
-    record.plan !== "free"
-  ) {
-    const admin = await createAdminClient();
-    const { data, error } = await admin
-      .from("user_credits")
-      .update({
-        email,
-        plan: "free",
-        credits_limit: FREE_CREDIT_LIMIT,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", userId)
-      .select("*")
-      .single();
-
-    if (error || !data) {
-      throw new Error(`Failed to reset admin to free mode: ${error?.message || "unknown error"}`);
-    }
-
-    record = data as UserCreditsRecord;
+  const record = await ensureUserCredits(userId, email);
+  if (isAdminEmail(email)) {
+    return { allowed: true, summary: toSummary(record) };
   }
 
   if (!lastSignInAt) {

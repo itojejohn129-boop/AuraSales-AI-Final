@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { ADMIN_OVERRIDE_EMAIL } from "@/lib/accessControl";
+import { isAdminEmail } from "@/lib/accessControl";
 import { cookies } from "next/headers";
 import { grantManualProUnlimited } from "@/lib/server/credits";
 
@@ -27,7 +27,7 @@ export async function GET(req: Request) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user?.email || user.email !== ADMIN_OVERRIDE_EMAIL) {
+    if (!user?.email || !isAdminEmail(user.email)) {
       return NextResponse.json({ verified: false }, { status: 200 });
     }
 
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user?.email || user.email !== ADMIN_OVERRIDE_EMAIL) {
+    if (!user?.email || !isAdminEmail(user.email)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

@@ -44,7 +44,7 @@ import { useTranslatedTexts } from "@/hooks/useTranslatedTexts";
 import { useSiteLanguage } from "@/hooks/useSiteLanguage";
 import { getDashboardLocaleCopy, getTrendLabel } from "@/lib/i18n/dashboardCopy";
 import { ImportProgressModal } from "@/components/ui/ImportProgressModal";
-import { AppUser, hasProAccess, ADMIN_OVERRIDE_EMAIL } from "@/lib/accessControl";
+import { AppUser, hasProAccess, isAdminEmail } from "@/lib/accessControl";
 
 function decodeUtf8Text(input: string): string {
   const text = String(input ?? "");
@@ -624,7 +624,7 @@ export function DashboardContent({ onDataLoad, isDemo = false }: DashboardConten
   const proOnlyFeatures = useMemo(() => new Set(["ai-voice", "predictive", "pdf", "anomaly"]), []);
 
   const verifyAdminPassword = useCallback(async (password: string) => {
-    if (currentUser.email !== ADMIN_OVERRIDE_EMAIL) return;
+    if (!isAdminEmail(currentUser.email)) return;
     if (!password) return;
     setIsVerifyingAdmin(true);
     try {
@@ -650,7 +650,7 @@ export function DashboardContent({ onDataLoad, isDemo = false }: DashboardConten
   }, [currentUser.email]);
 
   const verifyEnterprisePassword = useCallback(async (password: string) => {
-    if (currentUser.email !== ADMIN_OVERRIDE_EMAIL) return;
+    if (!isAdminEmail(currentUser.email)) return;
     if (!password) return;
     setIsVerifyingEnterprise(true);
     try {
@@ -767,7 +767,7 @@ export function DashboardContent({ onDataLoad, isDemo = false }: DashboardConten
   useEffect(() => {
     let mounted = true;
     const syncEnterpriseAccess = async () => {
-      if (currentUser.email !== ADMIN_OVERRIDE_EMAIL) {
+      if (!isAdminEmail(currentUser.email)) {
         if (mounted) setEnterpriseUnlocked(false);
         return;
       }
@@ -1937,7 +1937,7 @@ export function DashboardContent({ onDataLoad, isDemo = false }: DashboardConten
               Access: <span className="font-semibold text-slate-100">{currentUser.plan.toUpperCase()}</span> | Role:{" "}
               <span className="font-semibold text-slate-100">{currentUser.role.toUpperCase()}</span> | {currentUser.email}
             </p>
-            {currentUser.email === ADMIN_OVERRIDE_EMAIL && (
+            {isAdminEmail(currentUser.email) && (
               <span
                 className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                   enterpriseUnlocked
@@ -1950,7 +1950,7 @@ export function DashboardContent({ onDataLoad, isDemo = false }: DashboardConten
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {currentUser.email === ADMIN_OVERRIDE_EMAIL && currentUser.plan !== "pro" && (
+            {isAdminEmail(currentUser.email) && currentUser.plan !== "pro" && (
               <button
                 onClick={() => setShowAdminVerifyModal(true)}
                 className="px-3 py-1.5 text-xs rounded border border-emerald-600 text-emerald-200 hover:bg-emerald-900/30"
@@ -1958,7 +1958,7 @@ export function DashboardContent({ onDataLoad, isDemo = false }: DashboardConten
                 Unlock Pro
               </button>
             )}
-            {currentUser.email === ADMIN_OVERRIDE_EMAIL && !enterpriseUnlocked && (
+            {isAdminEmail(currentUser.email) && !enterpriseUnlocked && (
               <button
                 onClick={() => setShowEnterpriseVerifyModal(true)}
                 className="px-3 py-1.5 text-xs rounded border border-cyan-600 text-cyan-200 hover:bg-cyan-900/30"
