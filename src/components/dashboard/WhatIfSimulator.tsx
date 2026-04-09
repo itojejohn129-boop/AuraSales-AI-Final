@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { TrendingUp } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -26,6 +26,8 @@ export function WhatIfSimulator({
   targetLanguage = "en",
 }: WhatIfSimulatorProps) {
   const [marketingMultiplier, setMarketingMultiplier] = useState(1);
+  const chartHostRef = useRef<HTMLDivElement | null>(null);
+  const [canRenderChart, setCanRenderChart] = useState(false);
   const [chartAggregationMeta, setChartAggregationMeta] = useState<AggregationMetadata>({
     isAggregated: false,
     originalCount: 0,
@@ -102,6 +104,21 @@ export function WhatIfSimulator({
     onSimulate?.(value);
   };
 
+  useEffect(() => {
+    const host = chartHostRef.current;
+    if (!host) return;
+
+    const updateChartReady = () => {
+      const rect = host.getBoundingClientRect();
+      setCanRenderChart(rect.width > 0 && rect.height > 0);
+    };
+
+    updateChartReady();
+    const observer = new ResizeObserver(updateChartReady);
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <motion.div
       data-aura-translate-skip
@@ -151,41 +168,45 @@ export function WhatIfSimulator({
         </div>
 
       {/* Chart */}
-      <div className="mb-6 -mx-6 px-6">
-        <ResponsiveContainer width="100%" height={250}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-            <XAxis stroke="#94a3b8" label={{ value: translatedDaysAhead, position: "insideBottomRight", offset: -5 }} />
-            <YAxis stroke="#94a3b8" />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1e293b",
-                border: "1px solid #475569",
-                borderRadius: "8px",
-              }}
-              labelStyle={{ color: "#cbd5e1" }}
-            />
-            <Line
-              type="monotone"
-              dataKey="current"
-              stroke="#64748b"
-              name={translatedCurrentLabel}
-              strokeWidth={2}
-              dot={shouldDisableAnimations(chartData.length) ? { r: 0 } : false}
-              isAnimationActive={!shouldDisableAnimations(chartData.length)}
-            />
-            <Line
-              type="monotone"
-              dataKey="adjusted"
-              stroke="#10b981"
-              name={translatedAdjustedLabel}
-              strokeWidth={2}
-              dot={shouldDisableAnimations(chartData.length) ? { r: 0 } : false}
-              strokeDasharray="5 5"
-              isAnimationActive={!shouldDisableAnimations(chartData.length)}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+      <div ref={chartHostRef} className="mb-6 -mx-6 px-6 min-h-[250px]">
+        {canRenderChart ? (
+          <ResponsiveContainer width="100%" height={250} minHeight={250}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+              <XAxis stroke="#94a3b8" label={{ value: translatedDaysAhead, position: "insideBottomRight", offset: -5 }} />
+              <YAxis stroke="#94a3b8" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #475569",
+                  borderRadius: "8px",
+                }}
+                labelStyle={{ color: "#cbd5e1" }}
+              />
+              <Line
+                type="monotone"
+                dataKey="current"
+                stroke="#64748b"
+                name={translatedCurrentLabel}
+                strokeWidth={2}
+                dot={shouldDisableAnimations(chartData.length) ? { r: 0 } : false}
+                isAnimationActive={!shouldDisableAnimations(chartData.length)}
+              />
+              <Line
+                type="monotone"
+                dataKey="adjusted"
+                stroke="#10b981"
+                name={translatedAdjustedLabel}
+                strokeWidth={2}
+                dot={shouldDisableAnimations(chartData.length) ? { r: 0 } : false}
+                strokeDasharray="5 5"
+                isAnimationActive={!shouldDisableAnimations(chartData.length)}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-[250px] w-full animate-pulse rounded-lg border border-slate-700/60 bg-slate-800/40" />
+        )}
         {chartAggregationMeta.isAggregated && (
           <p className="text-xs text-slate-400 mt-2">{getAggregationMessage(chartAggregationMeta)}</p>
         )}

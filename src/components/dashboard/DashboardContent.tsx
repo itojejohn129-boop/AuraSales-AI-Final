@@ -1,7 +1,7 @@
 "use client";
 import SalesPieChart from "./SalesPieChart";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   LineChart,
@@ -622,6 +622,23 @@ export function DashboardContent({ onDataLoad, isDemo = false }: DashboardConten
   const [enterprisePasswordInput, setEnterprisePasswordInput] = useState("");
   const [isVerifyingEnterprise, setIsVerifyingEnterprise] = useState(false);
   const proOnlyFeatures = useMemo(() => new Set(["ai-voice", "predictive", "pdf", "anomaly"]), []);
+  const revenueChartHostRef = useRef<HTMLDivElement | null>(null);
+  const [canRenderRevenueChart, setCanRenderRevenueChart] = useState(false);
+
+  useEffect(() => {
+    const host = revenueChartHostRef.current;
+    if (!host) return;
+
+    const updateChartReady = () => {
+      const rect = host.getBoundingClientRect();
+      setCanRenderRevenueChart(rect.width > 0 && rect.height > 0);
+    };
+
+    updateChartReady();
+    const observer = new ResizeObserver(updateChartReady);
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, []);
 
   const verifyAdminPassword = useCallback(async (password: string) => {
     if (!isAdminEmail(currentUser.email)) return;
@@ -2131,60 +2148,66 @@ export function DashboardContent({ onDataLoad, isDemo = false }: DashboardConten
               ))}
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis
-                stroke="#94a3b8"
-                dataKey="date"
-                height={50}
-                angle={-45}
-                textAnchor="end"
-                tick={{ fontSize: 12, fontFamily: 'inherit' }}
-                minTickGap={50}
-                interval="preserveStartEnd"
-              />
-              <YAxis stroke="#94a3b8" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1e293b",
-                  border: "1px solid #475569",
-                  borderRadius: "8px",
-                }}
-                labelStyle={{ color: "#cbd5e1" }}
-                formatter={(value, name, props) => {
-                  if (props.payload && props.payload.predicted && !props.payload.actual) {
-                    return [
-                      `$${props.payload.predicted.toLocaleString()}`,
-                      'AI Prediction',
-                    ];
-                  }
-                  return [`$${value?.toLocaleString()}`, 'Actual Revenue'];
-                }}
-              />
-              <Line
-                {...({ dataMissBuffer: 0 } as any)}
-                type="monotone"
-                dataKey="actual"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={{ r: 2, fill: "#3b82f6" }}
-                activeDot={{ r: 3, fill: "#3b82f6" }}
-                isAnimationActive={true}
-              />
-              <Line
-                {...({ dataMissBuffer: 0 } as any)}
-                type="monotone"
-                dataKey="predicted"
-                stroke="#f59e0b"
-                strokeWidth={2}
-                dot={{ r: 2, fill: "#f59e0b" }}
-                activeDot={{ r: 3, fill: "#f59e0b" }}
-                strokeDasharray="5 5"
-                isAnimationActive={true}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div ref={revenueChartHostRef} className="min-h-[300px]">
+            {canRenderRevenueChart ? (
+              <ResponsiveContainer width="100%" height={300} minHeight={300}>
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis
+                    stroke="#94a3b8"
+                    dataKey="date"
+                    height={50}
+                    angle={-45}
+                    textAnchor="end"
+                    tick={{ fontSize: 12, fontFamily: 'inherit' }}
+                    minTickGap={50}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis stroke="#94a3b8" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1e293b",
+                      border: "1px solid #475569",
+                      borderRadius: "8px",
+                    }}
+                    labelStyle={{ color: "#cbd5e1" }}
+                    formatter={(value, name, props) => {
+                      if (props.payload && props.payload.predicted && !props.payload.actual) {
+                        return [
+                          `$${props.payload.predicted.toLocaleString()}`,
+                          'AI Prediction',
+                        ];
+                      }
+                      return [`$${value?.toLocaleString()}`, 'Actual Revenue'];
+                    }}
+                  />
+                  <Line
+                    {...({ dataMissBuffer: 0 } as any)}
+                    type="monotone"
+                    dataKey="actual"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={{ r: 2, fill: "#3b82f6" }}
+                    activeDot={{ r: 3, fill: "#3b82f6" }}
+                    isAnimationActive={true}
+                  />
+                  <Line
+                    {...({ dataMissBuffer: 0 } as any)}
+                    type="monotone"
+                    dataKey="predicted"
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    dot={{ r: 2, fill: "#f59e0b" }}
+                    activeDot={{ r: 3, fill: "#f59e0b" }}
+                    strokeDasharray="5 5"
+                    isAnimationActive={true}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[300px] w-full animate-pulse rounded-lg border border-slate-700/60 bg-slate-800/40" />
+            )}
+          </div>
           {revenueView.metadata.isAggregated && (
             <p className="text-xs text-slate-400 mt-2">
               {getAggregationMessage(revenueView.metadata)}

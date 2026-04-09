@@ -25,7 +25,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4 px-4 py-3">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-          <Image src="/logo.svg" alt="AuraSales Logo" width={36} height={36} />
+          <Image src="/logo.svg" alt="AuraSales Logo" width={36} height={36} priority />
           <span className="hidden sm:inline">AuraSales</span>
         </Link>
         {/* Navigation */}

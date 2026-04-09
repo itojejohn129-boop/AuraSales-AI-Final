@@ -29,7 +29,7 @@ export default function Footer() {
         {/* Brand */}
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Image src="/logo.svg" alt="AuraSales Logo" width={32} height={32} />
+            <Image src="/logo.svg" alt="AuraSales Logo" width={32} height={32} loading="eager" />
             <span className="font-bold text-lg">AuraSales</span>
           </div>
           <p className="text-slate-400 text-sm">{tagline}</p>

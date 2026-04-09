@@ -26,7 +26,14 @@ export default function TrustMarquee() {
           <div className="flex gap-12 items-center animate-marquee whitespace-nowrap py-2">
             {logos.map((logo, i) => (
               <div key={i} className="grayscale opacity-70 hover:opacity-100 hover:grayscale-0 transition-all duration-300">
-                <Image src={logo.src} alt={logo.alt} width={120} height={40} style={{ width: "auto", height: 40 }} />
+                <Image
+                  src={logo.src}
+                  alt={logo.alt}
+                  width={120}
+                  height={40}
+                  loading="eager"
+                  style={{ width: "auto", height: 40 }}
+                />
               </div>
             ))}
           </div>

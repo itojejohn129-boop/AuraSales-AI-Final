@@ -1,6 +1,6 @@
 'use client';
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, PieLabelRenderProps } from "recharts";
 import type { Formatter, NameType, Payload, ValueType } from "recharts/types/component/DefaultTooltipContent";
 
@@ -147,6 +147,24 @@ function normalizePieData(data: Array<unknown>): { error: string | null; data: P
 export default function SalesPieChart({ data }: SalesPieChartProps) {
   const { error, data: pieData } = normalizePieData(data);
   const totalSales = pieData.reduce((sum, d) => sum + d.value, 0);
+  const chartHostRef = useRef<HTMLDivElement | null>(null);
+  const [canRenderChart, setCanRenderChart] = useState(false);
+
+  useEffect(() => {
+    const host = chartHostRef.current;
+    if (!host) return;
+
+    const updateChartReady = () => {
+      const rect = host.getBoundingClientRect();
+      setCanRenderChart(rect.width > 0 && rect.height > 0);
+    };
+
+    updateChartReady();
+    const observer = new ResizeObserver(updateChartReady);
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, []);
+
   const tooltipFormatter: Formatter<ValueType, NameType> = (
     value,
     _name,
@@ -166,35 +184,39 @@ export default function SalesPieChart({ data }: SalesPieChartProps) {
 
   return (
     <div className="w-full space-y-4">
-      <div className="w-full h-[350px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={pieData}
-              cx="50%"
-              cy="50%"
-              labelLine={true}
-              label={renderLabel}
-              outerRadius={100}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {pieData.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1e293b",
-                border: "1px solid #475569",
-                borderRadius: "8px",
-                color: "#f8fafc"
-              }}
-              itemStyle={{ color: "#f8fafc" }}
-              formatter={tooltipFormatter}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+      <div ref={chartHostRef} className="w-full h-[350px] min-h-[350px]">
+        {canRenderChart ? (
+          <ResponsiveContainer width="100%" height="100%" minHeight={350}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                cx="50%"
+                cy="50%"
+                labelLine={true}
+                label={renderLabel}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {pieData.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #475569",
+                  borderRadius: "8px",
+                  color: "#f8fafc"
+                }}
+                itemStyle={{ color: "#f8fafc" }}
+                formatter={tooltipFormatter}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-full w-full animate-pulse rounded-lg border border-slate-700/60 bg-slate-800/40" />
+        )}
       </div>
       <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-4">
         <h4 className="text-sm font-semibold text-slate-50 mb-2">What this means</h4>
