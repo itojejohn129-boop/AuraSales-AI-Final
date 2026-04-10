@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/ingest-market-data",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}

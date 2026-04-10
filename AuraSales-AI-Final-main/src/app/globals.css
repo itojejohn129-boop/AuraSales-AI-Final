@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+* {
+  @apply antialiased;
+}
+
+:root {
+  --background: #03071e;
+  --foreground: #f0f6fc;
+  --primary: #388bfd;
+  --primary-dark: #1f6feb;
+  /* Force legacy color compatibility for the export engine */
+  --color-primary: #3b82f6;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: #f0f6fc;
+    --foreground: #03071e;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Smooth transitions for theme changes */
+html.light {
+  color-scheme: light;
+  --background: #f0f6fc;
+  --foreground: #03071e;
+}
+
+html.dark {
+  color-scheme: dark;
+  --background: #03071e;
+  --foreground: #f0f6fc;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(71 85 105 / 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(71 85 105 / 0.7);
+}
+
+/* Selection styling */
+::selection {
+  background: rgb(59 130 246 / 0.3);
+  color: #f0f6fc;
+}
+
+/* Input focus styling */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+/* Smooth animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-in-out;
+}
+
+/* Ensure print/export uses sRGB color interpolation to avoid oklab issues */
+@media print {
+  * {
+    color-interpolation: sRGB !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
